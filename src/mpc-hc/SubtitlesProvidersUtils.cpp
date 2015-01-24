@@ -1,5 +1,5 @@
 ﻿/*
- * (C) 2014 see Authors.txt
+ * (C) 2014-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -42,8 +42,8 @@
 
 int LevenshteinDistance(std::string s, std::string t)
 {
-    s = CStringA((char*)s.c_str()).MakeLower();
-    t = CStringA((char*)t.c_str()).MakeLower();
+    s = CStringA(s.c_str()).MakeLower();
+    t = CStringA(t.c_str()).MakeLower();
     // degenerate cases
     if (s == t) { return 0; }
     if (s.length() == size_t(0)) { return (int)t.length(); }

@@ -1,6 +1,6 @@
 /*
  * (C) 2003-2006 Gabest
- * (C) 2006-2014 see Authors.txt
+ * (C) 2006-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -5328,7 +5328,7 @@ void CMainFrame::OnFileSubtitlesSave()
                 pRTS->SaveAs(fd.GetPathName(), types[fd.m_ofn.nFilterIndex - 1], m_pCAP->GetFPS(), fd.GetDelay(), fd.GetEncoding(), fd.GetSaveExternalStyleFile());
             }
         } else {
-            AfxMessageBox(_T("This operation is not supported.\r\nThe active subtitles cannot be saved."), MB_ICONEXCLAMATION | MB_OK, 0);
+            AfxMessageBox(_T("This operation is not supported.\r\nThe selected subtitles cannot be saved."), MB_ICONEXCLAMATION | MB_OK);
         }
     }
 }
@@ -12709,8 +12709,8 @@ void CMainFrame::SetupSubtitlesSubMenu()
                             strLanguage = _T("Unknown");
                         }
 
-                        TCHAR left = pRTS->m_fHearingImpaired == TRUE ? '[' : ' ';
-                        TCHAR right = pRTS->m_fHearingImpaired == TRUE ? ']' : ' ';
+                        TCHAR left = pRTS->m_eHearingImpaired == HI_YES ? '[' : ' ';
+                        TCHAR right = pRTS->m_eHearingImpaired == HI_YES ? ']' : ' ';
                         strName.Format(L"[%s] %s\t%c%s%c", pRTS->m_provider, pRTS->m_name, left, strLanguage, right);
 
                         strName.Replace(_T("&"), _T("&&"));
@@ -16699,12 +16699,12 @@ afx_msg LRESULT CMainFrame::OnLoadSubtitles(WPARAM wParam, LPARAM lParam)
     SubtitlesData& data = *(SubtitlesData*)lParam;
 
     CAutoPtr<CRenderedTextSubtitle> pRTS(DEBUG_NEW CRenderedTextSubtitle(&m_csSubLock));
-    if (pRTS && pRTS->Open(CString(data.pSubtitlesInfo->Provider().Name().c_str()), (BYTE*)(LPCSTR)data.fileContents.c_str(), (int)data.fileContents.length(), DEFAULT_CHARSET, UTF8To16(data.fileName.c_str()), data.pSubtitlesInfo->hearingImpaired, ISO6391ToLcid(data.pSubtitlesInfo->languageCode.c_str())) && pRTS->GetStreamCount() > 0) {
+    if (pRTS && pRTS->Open(CString(data.pSubtitlesInfo->Provider().Name().c_str()), (BYTE*)(LPCSTR)data.fileContents.c_str(), (int)data.fileContents.length(), DEFAULT_CHARSET, UTF8To16(data.fileName.c_str()), HearingImpairedType(data.pSubtitlesInfo->hearingImpaired), ISO6391ToLcid(data.pSubtitlesInfo->languageCode.c_str())) && pRTS->GetStreamCount() > 0) {
         m_wndSubtitlesDownloadDialog.DoDownloaded(*data.pSubtitlesInfo);
 
         SubtitleInput subElement = pRTS.Detach();
         m_pSubStreams.AddTail(subElement);
-        if ((BOOL)data.bActivate) {
+        if (data.bActivate) {
             SetSubtitle(subElement.pSubStream);
         }
         return TRUE;
@@ -16736,7 +16736,7 @@ afx_msg LRESULT CMainFrame::OnGetSubtitles(WPARAM wParam, LPARAM lParam)
                     pSubtitlesInfo.GetFileInfo();
                     pSubtitlesInfo.releaseName = (const char*)UTF16To8(pRTS->m_name);
                     if (pSubtitlesInfo.hearingImpaired == -1) {
-                        pSubtitlesInfo.hearingImpaired = pRTS->m_fHearingImpaired;
+                        pSubtitlesInfo.hearingImpaired = pRTS->m_eHearingImpaired;
                     }
 
                     if (!pSubtitlesInfo.languageCode.length() && pRTS->m_lcid != 0) {

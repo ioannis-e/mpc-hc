@@ -1,6 +1,6 @@
 /*
  * (C) 2003-2006 Gabest
- * (C) 2006-2014 see Authors.txt
+ * (C) 2006-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -120,10 +120,8 @@ CAppSettings::CAppSettings()
     , bAutoDownloadSubtitles(false)
     , nAutoDownloadScoreMovies(0x16)
     , nAutoDownloadScoreSeries(0x18)
-    , strAutoDownloadSubtitlesExclude()
     , bAutoUploadSubtitles(false)
     , bPreferHearingImpairedSubtitles(false)
-    , strSubtitlesProviders()
     , iAnalogCountry(1)
     , iDefaultCaptureDevice(0)
     , fExitFullScreenAtTheEnd(true)

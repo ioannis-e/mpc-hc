@@ -376,7 +376,7 @@ public:
     CImageList& GetImageList() { return m_himl; }
 
 private:
-    CMainFrame& m_pMainFrame;
+    CMainFrame& m_MainFrame;
 
     std::vector<SubtitlesProvider*> m_Providers;
 

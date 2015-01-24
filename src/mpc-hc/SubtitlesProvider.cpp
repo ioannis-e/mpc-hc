@@ -204,7 +204,7 @@ SRESULT OpenSubtitles::Upload(const SubtitlesInfo& pSubtitlesInfo)
                     string_regex("\"(.+)\" .+|(.+)", string_replace((const char*)_result["data"][pSubtitlesInfo.fileHash]["MovieName"], "and", "&"), results);
                     std::string _title(results[0][0] + results[0][1]);
 
-                    if (_strcmpi(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(_result["data"][pSubtitlesInfo.fileHash]["MovieYear"])))*/) {
+                    if (_stricmp(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(_result["data"][pSubtitlesInfo.fileHash]["MovieYear"])))*/) {
                         args[1]["baseinfo"]["idmovieimdb"] = _result["data"][pSubtitlesInfo.fileHash]["MovieImdbID"]; //imdbid
                     }
                 }
@@ -223,7 +223,7 @@ SRESULT OpenSubtitles::Upload(const SubtitlesInfo& pSubtitlesInfo)
                         string_regex("\"(.+)\" .+|(.+)", string_replace((const char*)_result["data"][pSubtitlesInfo.fileHash][i]["MovieName"], "and", "&"), results);
                         std::string _title(results[0][0] + results[0][1]);
 
-                        if (_strcmpi(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(_result["data"][pSubtitlesInfo.fileHash][i]["MovieYear"])))*/) {
+                        if (_stricmp(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(_result["data"][pSubtitlesInfo.fileHash][i]["MovieYear"])))*/) {
                             args[1]["baseinfo"]["idmovieimdb"] = _result["data"][pSubtitlesInfo.fileHash][i]["MovieImdbID"]; //imdbid
                             break;
                         }
@@ -244,7 +244,7 @@ SRESULT OpenSubtitles::Upload(const SubtitlesInfo& pSubtitlesInfo)
                         if (results.size() == 1) {
                             std::string _title(results[0][0]);
 
-                            if (_strcmpi(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(results[0][1].c_str())))*/) {
+                            if (_stricmp(title.c_str(), _title.c_str()) == 0 /*&& (pSubtitlesInfo.year == -1 || (pSubtitlesInfo.year != -1 && pSubtitlesInfo.year == atoi(results[0][1].c_str())))*/) {
                                 args[1]["baseinfo"]["idmovieimdb"] = _result["data"][i]["id"]; //imdbid
                                 break;
                             }
@@ -414,10 +414,6 @@ std::string SubDB::Languages()
 ** podnapisi
 ******************************************************************************/
 
-const std::regex podnapisi::regex_pattern[] = {
-    std::regex("<a href=\"(/en/ppodnapisi/download/i/\\d+/k/[^\"]+)\">", regex_flags),
-};
-
 SRESULT podnapisi::Login(std::string& sUserName, std::string& sPassword)
 {
     //TODO: implement
@@ -574,10 +570,10 @@ SRESULT podnapisi::Download(SubtitlesInfo& pSubtitlesInfo)
     searchResult = Download(pSubtitlesInfo.url, "", temp);
 
     regex_results results;
-    string_regex(regex_pattern[0], temp, results);
+    string_regex(std::regex("(download/i/" + pSubtitlesInfo.id + "/[^\"]*)\"", regex_flags), temp, results);
     for (const auto& iter : results) {
         CheckAbortAndReturn();
-        searchResult = Download("http://simple.podnapisi.net" + iter[0], "", pSubtitlesInfo.fileContents);
+        searchResult = Download("http://simple.podnapisi.net/en/ppodnapisi/" + iter[0], "", pSubtitlesInfo.fileContents);
     }
     return searchResult;
 }

@@ -223,8 +223,8 @@ std::regex regex_pattern[] = {
 HRESULT SubtitlesInfo::GetFileInfo(const std::string& sFileName /*= std::string()*/)
 {
     if (sFileName.empty()) {
-        CMainFrame& pMainFrame = *(CMainFrame*)(AfxGetMyApp()->GetMainWnd());
-        if (CComQIPtr<IBaseFilter> pBF = pMainFrame.m_pFSF) {
+        CMainFrame& MainFrame = *(CMainFrame*)(AfxGetMyApp()->GetMainWnd());
+        if (CComQIPtr<IBaseFilter> pBF = MainFrame.m_pFSF) {
             BeginEnumPins(pBF, pEP, pPin) {
                 if (pAsyncReader = pPin) {
                     break;
@@ -233,9 +233,9 @@ HRESULT SubtitlesInfo::GetFileInfo(const std::string& sFileName /*= std::string(
             EndEnumPins;
         }
 
-        if (pAsyncReader && pMainFrame.m_pFSF) {
+        if (pAsyncReader && MainFrame.m_pFSF) {
             LPOLESTR name;
-            if (FAILED(pMainFrame.m_pFSF->GetCurFile(&name, nullptr))) {
+            if (FAILED(MainFrame.m_pFSF->GetCurFile(&name, nullptr))) {
                 return E_FAIL;
             }
             filePath = UTF16To8(name);
@@ -248,7 +248,7 @@ HRESULT SubtitlesInfo::GetFileInfo(const std::string& sFileName /*= std::string(
             }
             fileSize = size;
         } else {
-            CString _filePath(pMainFrame.m_wndPlaylistBar.GetCurFileName());
+            CString _filePath(MainFrame.m_wndPlaylistBar.GetCurFileName());
             {
                 CFile file;
                 CFileException fileException;
@@ -431,7 +431,7 @@ BOOL SubtitlesProvider::CheckInternetConnection()
 ******************************************************************************/
 
 SubtitlesProviders::SubtitlesProviders()
-    : m_pMainFrame(*(CMainFrame*)(AfxGetMyApp()->GetMainWnd()))
+    : m_MainFrame(*(CMainFrame*)(AfxGetMyApp()->GetMainWnd()))
 {
     m_himl.Create(16, 16, ILC_COLOR32, 0, 0);
     RegisterProviders();
@@ -452,19 +452,19 @@ BOOL SubtitlesProviders::CheckInternetConnection()
 void SubtitlesProviders::Search(BOOL bAutoDownload)
 {
     Abort(SubtitlesThreadType(STT_SEARCH | STT_DOWNLOAD));
-    m_pMainFrame.m_wndSubtitlesDownloadDialog.DoClear();
+    m_MainFrame.m_wndSubtitlesDownloadDialog.DoClear();
 
     if (CheckInternetConnection()) {
-        InsertTask(DEBUG_NEW SubtitlesTask(&m_pMainFrame, bAutoDownload, LanguagesISO6391()));
+        InsertTask(DEBUG_NEW SubtitlesTask(&m_MainFrame, bAutoDownload, LanguagesISO6391()));
     } else if (bAutoDownload == FALSE) {
-        m_pMainFrame.m_wndSubtitlesDownloadDialog.DoFailed();
+        m_MainFrame.m_wndSubtitlesDownloadDialog.DoFailed();
     }
 }
 
 void SubtitlesProviders::Download(SubtitlesInfo& pSubtitlesInfo, BOOL bActivate)
 {
     if (CheckInternetConnection()) {
-        InsertTask(DEBUG_NEW SubtitlesTask(&m_pMainFrame, pSubtitlesInfo, bActivate));
+        InsertTask(DEBUG_NEW SubtitlesTask(&m_MainFrame, pSubtitlesInfo, bActivate));
     }
 }
 
@@ -474,11 +474,11 @@ void SubtitlesProviders::Upload()
         // We get all the information we need within the main thread, to delay closing the file
         // until we have everything we need.
         SubtitlesInfo pSubtitlesInfo;
-        m_pMainFrame.SendMessage(WM_GETSUBTITLES, 0, (LPARAM)&pSubtitlesInfo);
+        m_MainFrame.SendMessage(WM_GETSUBTITLES, 0, (LPARAM)&pSubtitlesInfo);
         //pSubtitlesInfo.GetCurrentSubtitles();
 
         if (!pSubtitlesInfo.fileContents.empty()) {
-            InsertTask(DEBUG_NEW SubtitlesTask(&m_pMainFrame, pSubtitlesInfo));
+            InsertTask(DEBUG_NEW SubtitlesTask(&m_MainFrame, pSubtitlesInfo));
         }
     }
 }
@@ -765,22 +765,22 @@ void SubtitlesThread::Set(SubtitlesInfo& pSubtitlesInfo)
     //iter.score = 0; //LevenshteinDistance(m_pFileInfo.fileName, string_(subtitlesName)) * 100;
 
     SHORT score = ((SHORT)pSubtitlesInfo.corrected);
-    score += (((!m_pFileInfo.title.empty() && _strcmpi(m_pFileInfo.NormalizeTitle().c_str(), pSubtitlesInfo.NormalizeTitle().c_str()) == 0)) ||
-              ((!_title.empty() && _strcmpi(m_pFileInfo.NormalizeTitle().c_str(), pSubtitlesInfo.NormalizeString(_title).c_str()) == 0)))
+    score += (((!m_pFileInfo.title.empty() && _stricmp(m_pFileInfo.NormalizeTitle().c_str(), pSubtitlesInfo.NormalizeTitle().c_str()) == 0)) ||
+              ((!_title.empty() && _stricmp(m_pFileInfo.NormalizeTitle().c_str(), pSubtitlesInfo.NormalizeString(_title).c_str()) == 0)))
              ? 3 : !m_pFileInfo.title.empty() || !_title.empty() ? -3 : 0;
 
     if (!_title.empty()) { pSubtitlesInfo.title = _title; }
 
-    score += (!m_pFileInfo.country.empty() && _strcmpi(m_pFileInfo.country.c_str(), pSubtitlesInfo.country.c_str()) == 0) ? 2 : !m_pFileInfo.country.empty() ? -2 : 0;
+    score += (!m_pFileInfo.country.empty() && _stricmp(m_pFileInfo.country.c_str(), pSubtitlesInfo.country.c_str()) == 0) ? 2 : !m_pFileInfo.country.empty() ? -2 : 0;
     score += (m_pFileInfo.year != -1 && m_pFileInfo.year == pSubtitlesInfo.year) ? 1 : 0;
     score += (m_pFileInfo.seasonNumber != -1 && m_pFileInfo.seasonNumber == pSubtitlesInfo.seasonNumber) ? 2 : m_pFileInfo.seasonNumber > 0 ? -2 : 0;
     score += (m_pFileInfo.episodeNumber != -1 && m_pFileInfo.episodeNumber == pSubtitlesInfo.episodeNumber) ? 2 : m_pFileInfo.episodeNumber > 0 ? -2 : 0;
-    score += (!m_pFileInfo.title2.empty() && _strcmpi(m_pFileInfo.title2.c_str(), pSubtitlesInfo.title2.c_str()) == 0) ? 2 : 0;
-    score += (!m_pFileInfo.resolution.empty() && _strcmpi(m_pFileInfo.resolution.c_str(), pSubtitlesInfo.resolution.c_str()) == 0) ? 1 : 0;
-    score += (!m_pFileInfo.format.empty() && _strcmpi(m_pFileInfo.format.c_str(), pSubtitlesInfo.format.c_str()) == 0) ? 1 : 0;
-    score += (!m_pFileInfo.audioCodec.empty() && _strcmpi(m_pFileInfo.audioCodec.c_str(), pSubtitlesInfo.audioCodec.c_str()) == 0) ? 1 : 0;
-    score += (!m_pFileInfo.videoCodec.empty() && _strcmpi(m_pFileInfo.videoCodec.c_str(), pSubtitlesInfo.videoCodec.c_str()) == 0) ? 1 : 0;
-    score += (!m_pFileInfo.releaseGroup.empty() && _strcmpi(m_pFileInfo.releaseGroup.c_str(), pSubtitlesInfo.releaseGroup.c_str()) == 0) ? 1 : 0;
+    score += (!m_pFileInfo.title2.empty() && _stricmp(m_pFileInfo.title2.c_str(), pSubtitlesInfo.title2.c_str()) == 0) ? 2 : 0;
+    score += (!m_pFileInfo.resolution.empty() && _stricmp(m_pFileInfo.resolution.c_str(), pSubtitlesInfo.resolution.c_str()) == 0) ? 1 : 0;
+    score += (!m_pFileInfo.format.empty() && _stricmp(m_pFileInfo.format.c_str(), pSubtitlesInfo.format.c_str()) == 0) ? 1 : 0;
+    score += (!m_pFileInfo.audioCodec.empty() && _stricmp(m_pFileInfo.audioCodec.c_str(), pSubtitlesInfo.audioCodec.c_str()) == 0) ? 1 : 0;
+    score += (!m_pFileInfo.videoCodec.empty() && _stricmp(m_pFileInfo.videoCodec.c_str(), pSubtitlesInfo.videoCodec.c_str()) == 0) ? 1 : 0;
+    score += (!m_pFileInfo.releaseGroup.empty() && _stricmp(m_pFileInfo.releaseGroup.c_str(), pSubtitlesInfo.releaseGroup.c_str()) == 0) ? 1 : 0;
     const auto& s = AfxGetAppSettings();
 
     if (IsThreadAborting()) { return; }

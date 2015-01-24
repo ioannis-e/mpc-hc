@@ -1,6 +1,6 @@
 /*
  * (C) 2003-2006 Gabest
- * (C) 2006-2014 see Authors.txt
+ * (C) 2006-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -39,7 +39,7 @@ CSubtitleDlDlg::CSubtitleDlDlg(CWnd* pParentWnd)
     : CResizableDialog(CSubtitleDlDlg::IDD, pParentWnd)
     , m_ps(nullptr, 0, 0)
     , m_fReplaceSubs(false)
-    , m_pMainFrame(*(CMainFrame*)(pParentWnd))
+    , m_MainFrame(*(CMainFrame*)(pParentWnd))
 {
 }
 
@@ -59,7 +59,7 @@ void CSubtitleDlDlg::SetStatusText(const CString& status, BOOL bPropagate/* = TR
 {
     m_status.SetText(status, 0, 0);
     if (bPropagate) {
-        m_pMainFrame.SendStatusMessage(status, 5000);
+        m_MainFrame.SendStatusMessage(status, 5000);
     }
 }
 
@@ -134,7 +134,7 @@ BOOL CSubtitleDlDlg::OnInitDialog()
                             | LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT
                             | LVS_EX_CHECKBOXES   | LVS_EX_LABELTIP);
 
-    m_list.SetImageList(&m_pMainFrame.m_pSubtitlesProviders->GetImageList(), LVSIL_SMALL);
+    m_list.SetImageList(&m_MainFrame.m_pSubtitlesProviders->GetImageList(), LVSIL_SMALL);
 
     m_ps.m_hWnd = m_list.GetSafeHwnd();
     m_ps.m_nSortColumn = AfxGetApp()->GetProfileInt(IDS_R_DLG_SUBTITLEDL, IDS_RS_DLG_SUBTITLEDL_SORTCOLUMN, 0);
@@ -214,8 +214,8 @@ void CSubtitleDlDlg::OnOK()
     m_fReplaceSubs = IsDlgButtonChecked(IDC_CHECK1) == BST_CHECKED;
 
     if (m_fReplaceSubs) {
-        CAutoLock cAutoLock(&m_pMainFrame.m_csSubLock);
-        m_pMainFrame.m_pSubStreams.RemoveAll();
+        CAutoLock cAutoLock(&m_MainFrame.m_csSubLock);
+        m_MainFrame.m_pSubStreams.RemoveAll();
     }
 
     BOOL bActivate = TRUE;
@@ -237,17 +237,17 @@ void CSubtitleDlDlg::OnOK()
 void CSubtitleDlDlg::OnRefresh()
 {
     m_list.DeleteAllItems();
-    m_pMainFrame.m_pSubtitlesProviders->Search(FALSE);
+    m_MainFrame.m_pSubtitlesProviders->Search(FALSE);
 }
 
 void CSubtitleDlDlg::OnAbort()
 {
-    m_pMainFrame.m_pSubtitlesProviders->Abort(SubtitlesThreadType(STT_SEARCH | STT_DOWNLOAD));
+    m_MainFrame.m_pSubtitlesProviders->Abort(SubtitlesThreadType(STT_SEARCH | STT_DOWNLOAD));
 }
 
 void CSubtitleDlDlg::OnOptions()
 {
-    m_pMainFrame.ShowOptions(CPPageSubMisc::IDD);
+    m_MainFrame.ShowOptions(CPPageSubMisc::IDD);
 }
 
 void CSubtitleDlDlg::OnUpdateOk(CCmdUI* pCmdUI)
@@ -453,7 +453,7 @@ void CSubtitleDlDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
     const auto& s = AfxGetAppSettings();
 
-    if (bShow == TRUE && !m_list.GetItemCount() && !m_pMainFrame.m_fAudioOnly && s.fEnableSubtitles  && !s.bAutoDownloadSubtitles) {
+    if (bShow == TRUE && !m_list.GetItemCount() && !m_MainFrame.m_fAudioOnly && s.fEnableSubtitles  && !s.bAutoDownloadSubtitles) {
         OnRefresh();
     }
 }

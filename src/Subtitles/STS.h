@@ -1,6 +1,6 @@
 /*
  * (C) 2003-2006 Gabest
- * (C) 2006-2014 see Authors.txt
+ * (C) 2006-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -123,6 +123,12 @@ public:
     }
 };
 
+enum HearingImpairedType {
+    HI_UNKNOWN = -1,
+    HI_NO = 0,
+    HI_YES = 1
+};
+
 class CSimpleTextSubtitle : public CAtlArray<STSEntry>
 {
     friend class CSubtitleEditorDlg;
@@ -141,7 +147,8 @@ public:
     CString m_path;
 
     CString m_provider;
-    int m_fHearingImpaired;
+
+    HearingImpairedType m_eHearingImpaired;
 
     CSize m_dstScreenSize;
     int m_defaultWrapStyle;
@@ -178,7 +185,7 @@ public:
     bool Open(CString fn, int CharSet, CString name = _T(""), CString videoName = _T(""));
     bool Open(CTextFile* f, int CharSet, CString name);
     bool Open(BYTE* data, int len, int CharSet, CString name);
-    bool Open(CString provider, BYTE* data, int len, int CharSet, CString name, int fHearingImpaired, LCID lcid);
+    bool Open(CString provider, BYTE* data, int len, int CharSet, CString name, HearingImpairedType eHearingImpaired, LCID lcid);
     bool SaveAs(CString fn, Subtitle::SubType type, double fps = -1, int delay = 0, CTextFile::enc e = CTextFile::DEFAULT_ENCODING, bool bCreateExternalStyleFile = true);
 
     void Add(CStringW str, bool fUnicode, int start, int end, CString style = _T("Default"), CString actor = _T(""), CString effect = _T(""), const CRect& marginRect = CRect(0, 0, 0, 0), int layer = 0, int readorder = -1);

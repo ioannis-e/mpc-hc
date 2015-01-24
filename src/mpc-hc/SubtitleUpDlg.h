@@ -1,5 +1,5 @@
 /*
- * (C) 2014 see Authors.txt
+ * (C) 2014-2015 see Authors.txt
  *
  * This file is part of MPC-HC.
  *
@@ -44,7 +44,7 @@ private:
     CListCtrl m_list;
     CProgressCtrl m_progress;
     CStatusBarCtrl m_status;
-    CMainFrame& m_pMainFrame;
+    CMainFrame& m_MainFrame;
 
     void DownloadSelectedSubtitles();
     void SetStatusText(const CString& status, BOOL bPropagate = TRUE);
