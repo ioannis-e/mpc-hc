@@ -533,7 +533,7 @@ afx_msg LRESULT CSubtitleDlDlg::OnCompleted(WPARAM wParam, LPARAM lParam)
         for (; iter != _end; ++iter) {
             int iItem = m_list.InsertItem(0, UTF8To16(iter->Provider().Name().c_str()), iter->Provider().GetIconIndex());
             m_list.SetItemText(iItem, COL_FILENAME, UTF8To16(iter->fileName.c_str()));
-            m_list.SetItemText(iItem, COL_LANGUAGE, UTF8To16(iter->languageName.c_str()));
+            m_list.SetItemText(iItem, COL_LANGUAGE, ISO639XToLanguage(iter->languageCode.c_str()));
             CString disc;
             disc.Format(_T("%d/%d"), iter->discNumber, iter->discCount);
             m_list.SetItemText(iItem, COL_DISC, disc);
