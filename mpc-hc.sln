@@ -25,6 +25,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Transform", "Transform", "{F9F42BF2-3F13-4654-82C5-E27B8879EC4E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mpc-hc", "src\mpc-hc\mpc-hc.vcxproj", "{8CE7E5D0-C821-47AC-A247-28EC95B34670}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B} = {CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeCSS", "src\DeCSS\DeCSS.vcxproj", "{1A2DFD1A-3C6C-44D1-909D-294AF646B575}"
 EndProject
@@ -127,6 +130,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zita-resampler", "src\thirdparty\zita-resampler\zita-resampler.vcxproj", "{F3D02050-F39A-4103-8343-09285359A495}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sanear", "src\thirdparty\sanear\sanear\sanear.vcxproj", "{BB2B61AF-734A-4DAD-9326-07F4F9EA088F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lualib", "..\lua-5.3.0\build\lualib.vcxproj", "{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1234,6 +1239,25 @@ Global
 		{BB2B61AF-734A-4DAD-9326-07F4F9EA088F}.Release|Win32.Build.0 = Release|Win32
 		{BB2B61AF-734A-4DAD-9326-07F4F9EA088F}.Release|x64.ActiveCfg = Release|x64
 		{BB2B61AF-734A-4DAD-9326-07F4F9EA088F}.Release|x64.Build.0 = Release|x64
+
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Filter|Win32.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Filter|Win32.Build.0 = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Filter|x64.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Lite|Win32.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Lite|Win32.Build.0 = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug Lite|x64.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug|Win32.Build.0 = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Debug|x64.ActiveCfg = Debug|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Filter|Win32.ActiveCfg = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Filter|Win32.Build.0 = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Filter|x64.ActiveCfg = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Lite|Win32.ActiveCfg = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Lite|Win32.Build.0 = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release Lite|x64.ActiveCfg = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release|Win32.ActiveCfg = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release|Win32.Build.0 = Release|Win32
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1299,5 +1323,6 @@ Global
 		{4C7A1953-CBC4-42D5-A12F-BB512C64B547} = {D9A0529B-9EC4-4D30-9E05-A5D533739D95}
 		{F3D02050-F39A-4103-8343-09285359A495} = {D9A0529B-9EC4-4D30-9E05-A5D533739D95}
 		{BB2B61AF-734A-4DAD-9326-07F4F9EA088F} = {D9A0529B-9EC4-4D30-9E05-A5D533739D95}
+		{CC7C9AC5-5482-4464-94C3-FDA7FFF4796B} = {D9A0529B-9EC4-4D30-9E05-A5D533739D95}
 	EndGlobalSection
 EndGlobal

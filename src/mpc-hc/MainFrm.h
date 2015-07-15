@@ -72,6 +72,8 @@
 #include "DSMPropertyBag.h"
 #include "SkypeMoodMsgHandler.h"
 #include "DpiHelper.h"
+#include "SubtitleDlDlg.h"
+#include "SubtitleUpDlg.h"
 
 #include <memory>
 #include <future>
@@ -210,10 +212,10 @@ private:
 
     friend class CPPageFileInfoSheet;
     friend class CPPageLogo;
-    friend class CSubtitleDlDlg;
     friend class CMouse;
     friend class CPlayerSeekBar; // for accessing m_controls.ControlChecked()
     friend class CChildView; // for accessing m_controls.DelayShowNotLoaded()
+    friend class SubtitlesProvider;
 
     // TODO: wrap these graph objects into a class to make it look cleaner
 
@@ -503,6 +505,19 @@ protected:
     bool m_fOpeningAborted;
     bool m_bWasSnapped;
 
+protected:
+    friend class CSubtitleDlDlg;
+    CSubtitleDlDlg m_wndSubtitlesDownloadDialog;
+    friend class CSubtitleUpDlg;
+    CSubtitleUpDlg m_wndSubtitlesUploadDialog;
+    friend class CPPageSubMisc;
+
+    friend class SubtitlesProviders;
+    SubtitlesProviders* m_pSubtitlesProviders;
+    friend struct SubtitlesInfo;
+    friend class SubtitlesTask;
+    friend class SubtitlesThread;
+
 public:
     void OpenCurPlaylistItem(REFERENCE_TIME rtStart = 0);
     void OpenMedia(CAutoPtr<OpenMediaData> pOMD);
@@ -754,16 +769,14 @@ public:
     afx_msg void OnUpdateFileSaveImage(CCmdUI* pCmdUI);
     afx_msg void OnFileSaveThumbnails();
     afx_msg void OnUpdateFileSaveThumbnails(CCmdUI* pCmdUI);
-    afx_msg void OnFileLoadsubtitle();
-    afx_msg void OnUpdateFileLoadsubtitle(CCmdUI* pCmdUI);
-    afx_msg void OnFileSavesubtitle();
-    afx_msg void OnUpdateFileSavesubtitle(CCmdUI* pCmdUI);
-    afx_msg void OnFileISDBSearch();
-    afx_msg void OnUpdateFileISDBSearch(CCmdUI* pCmdUI);
-    afx_msg void OnFileISDBUpload();
-    afx_msg void OnUpdateFileISDBUpload(CCmdUI* pCmdUI);
-    afx_msg void OnFileISDBDownload();
-    afx_msg void OnUpdateFileISDBDownload(CCmdUI* pCmdUI);
+    afx_msg void OnFileSubtitlesLoad();
+    afx_msg void OnUpdateFileSubtitlesLoad(CCmdUI* pCmdUI);
+    afx_msg void OnFileSubtitlesSave();
+    afx_msg void OnUpdateFileSubtitlesSave(CCmdUI* pCmdUI);
+    afx_msg void OnFileSubtitlesUpload();
+    afx_msg void OnUpdateFileSubtitlesUpload(CCmdUI* pCmdUI);
+    afx_msg void OnFileSubtitlesDownload();
+    afx_msg void OnUpdateFileSubtitlesDownload(CCmdUI* pCmdUI);
     afx_msg void OnFileProperties();
     afx_msg void OnUpdateFileProperties(CCmdUI* pCmdUI);
     afx_msg void OnFileCloseAndRestore();
@@ -1108,4 +1121,7 @@ public:
     bool OpenBD(CString Path);
 
     bool GetDecoderType(CString& type) const;
+protected:
+    afx_msg LRESULT OnLoadSubtitles(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnGetSubtitles(WPARAM wParam, LPARAM lParam);
 };
