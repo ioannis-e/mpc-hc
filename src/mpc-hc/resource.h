@@ -593,6 +593,9 @@
 #define IDI_TITLOVI                     21004
 #define IDI_YSUBS                       21005
 #define IDI_N24                         21006
+#define IDI_ADDIC7ED                    21007
+#define IDI_MOVIESUBTITLES              21008
+#define IDI_TVSUBTITLES                 21009
 #define IDC_FULLSCREEN_MONITOR_CHECK    22002
 #define IDC_SLI_CONTRAST                22003
 #define IDC_RESET                       22004
@@ -1571,7 +1574,7 @@
 #define IDS_PPAGEADVANCED_DEFAULTTOOLBARSIZE 57532
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        20018

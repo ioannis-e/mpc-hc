@@ -101,7 +101,9 @@ IDI_SUBDB                        ICON                    "res\\subtitles\\favico
 IDI_TITLOVI                      ICON                    "res\\subtitles\\favicon_titlovi.ico"
 IDI_YSUBS                        ICON                    "res\\subtitles\\favicon_ysubs.ico"
 IDI_N24                          ICON                    "res\\subtitles\\favicon_napisy24.ico"
-
+IDI_ADDIC7ED                     ICON                    "res\\subtitles\\favicon_addic7ed.ico"
+IDI_TVSUBTITLES                  ICON                    "res\\subtitles\\favicon_moviesubtitles.ico"
+IDI_MOVIESUBTITLES               ICON                    "res\\subtitles\\favicon_tvsubtitles.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

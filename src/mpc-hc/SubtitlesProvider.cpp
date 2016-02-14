@@ -55,6 +55,9 @@ void SubtitlesProviders::RegisterProviders()
     Register<SubDB>(this);
     Register<ysubs>(this);
     Register<Napisy24>(this);
+    Register<addic7ed>(this);
+    Register<Moviesubtitles>(this);
+    Register<TVsubtitles>(this);
 }
 
 #define CheckAbortAndReturn() { if (IsAborting()) return SR_ABORTED; }
@@ -1117,5 +1120,310 @@ SRESULT Napisy24::Download(SubtitlesInfo& subtitlesInfo)
 const std::set<std::string>& Napisy24::Languages() const
 {
     static std::set<std::string> result = {"pl"};
+    return result;
+}
+
+/******************************************************************************
+** TVsubtitles
+******************************************************************************/
+
+const std::regex TVsubtitles::regex_pattern[] = {
+    std::regex("href=\"/(tvshow-(\\d+)[.]html)\">(.*?) (?:[(]([a-z]{2})[)] )?[(](\\d{4})-(\\d{4})[)]</a>", RegexFlags),
+    std::regex("<a href=\"/subtitle-(\\d+)[.]html\">[^]+?<img src=\"images/flags/([a-z]{2})[.]gif\"[^]+?</div></a>", RegexFlags),
+    std::regex("filename:.+?>([^<\n\t]+)[^]+?downloads:.+?>(\\d+)", RegexFlags),
+};
+
+SRESULT TVsubtitles::Search(const SubtitlesInfo& pFileInfo) {
+    SRESULT searchResult = SR_UNDEFINED;
+    if (pFileInfo.seasonNumber != -1) {
+        std::string data;
+        searchResult = DownloadInternal(StringFormat("http://www.tvsubtitles.net/search.php?q=%s", UrlEncode(pFileInfo.title.c_str())), "", data);
+
+        regexResults results;
+        stringMatch(regex_pattern[0], data, results);
+        for (const auto& iter : results) {
+            CheckAbortAndReturn();
+            if (_strcmpi(pFileInfo.title.c_str(), iter[2].c_str()) != 0) { continue; }
+            std::string data1;
+            searchResult = DownloadInternal(StringFormat("http://www.tvsubtitles.net/tvshow-%s-%d.html", iter[1].c_str(), pFileInfo.seasonNumber), "", data1);
+
+            regexResults results1;
+            stringMatch(std::regex(StringFormat("<td>%dx%0*d</td>[^<]*<td[^>]+><a href=\"(episode-(\\d+)[.]html)\"><b>(.*?)</b></a></td>[^<]*<td>([1-9]\\d*)</td>", pFileInfo.seasonNumber, 2, pFileInfo.episodeNumber), RegexFlags), data1, results1);
+            for (const auto& iter1 : results1) {
+                CheckAbortAndReturn();
+                std::string data2;
+                searchResult = DownloadInternal(StringFormat("http://www.tvsubtitles.net/episode-%s.html", iter1[1].c_str()), "", data2);
+
+                regexResults results2;
+                //stringMatch(StringFormat("<a href=\"/subtitle-(\\d+)[.]html\">[^]+?<img src=\"images/flags/(%s)[.]gif\"", GetLanguagesString().c_str()), data2, results2);
+                //too slow//stringMatch(StringFormat("<a href=\"/subtitle-(\\d+)[.]html\">[^]+?<img src=\"images/flags/(%s)[.]gif\"[^]+?>([^<]+)[^]+?>\n\t([^<]+)[^]+?>\n\t([^<]+)[^]+?>\n\t(\\d+)</p></div></a>", GetLanguagesString().c_str()), data2, results2);
+                //TODO: test
+                //stringMatch("<a href=\"/subtitle-(\\d+)[.]html\">[^]+?<img src=\"images/flags/([a-z]{2})[.]gif\"[^]+?>([^<]+)[^]+?>\n\t([^<]+)[^]+?>\n\t([^<]+)[^]+?>\n\t(\\d+)</p></div></a>", data2, results2);
+                stringMatch(regex_pattern[1], data2, results2);
+                for (auto& iter2 : results2) {
+                    CheckAbortAndReturn();
+                    for (const auto& language : tvsubtitles_languages) { if (iter2[1] == language.code) { iter2[1] = language.name; } }
+                    if (CheckLanguage(iter2[1])) {
+                        std::string data3;
+                        std::string url = StringFormat("http://www.tvsubtitles.net/subtitle-%s.html", iter2[0].c_str());
+                        searchResult = DownloadInternal(url, "", data3);
+
+                        regexResults results3;
+                        SubtitlesInfo pSubtitlesInfo;
+                        stringMatch(regex_pattern[2], data3, results3);
+                        for (const auto& iter3 : results3) {
+                            CheckAbortAndReturn();
+                            pSubtitlesInfo.fileName = iter3[0];
+                            pSubtitlesInfo.title = iter[2];
+                            pSubtitlesInfo.country = iter[3];
+                            pSubtitlesInfo.year = iter[4].empty() ? -1 : atoi(iter[4].c_str());
+                            pSubtitlesInfo.title2 = iter1[2];
+                            pSubtitlesInfo.seasonNumber = pFileInfo.seasonNumber;
+                            pSubtitlesInfo.episodeNumber = pFileInfo.episodeNumber;
+                            pSubtitlesInfo.id = iter2[0];
+                            pSubtitlesInfo.url = url;
+                            pSubtitlesInfo.languageCode = iter2[1];
+                            pSubtitlesInfo.languageName = UTF16To8(ISOLang::ISO639XToLanguage(pSubtitlesInfo.languageCode.c_str()));
+                            pSubtitlesInfo.downloadCount = atoi(iter3[1].c_str());
+                            pSubtitlesInfo.discNumber = 1;
+                            pSubtitlesInfo.discCount = 1;
+                            Set(pSubtitlesInfo);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return searchResult;
+}
+
+SRESULT TVsubtitles::Download(SubtitlesInfo& pSubtitlesInfo) {
+    std::string url = StringFormat("http://www.tvsubtitles.net/download-%s.html", pSubtitlesInfo.id.c_str());
+    TRACE(_T("%S::Download => %S\n"), Name().c_str(), url.c_str());
+
+    return DownloadInternal(url, "", pSubtitlesInfo.fileContents);
+}
+
+const std::set<std::string>& TVsubtitles::Languages() const {
+    static std::set<std::string> result = { "en", "es", "fr", "de", "br", "ru", "ua", "it", "gr", "ar", "hu", "pl", "tr", "nl", "pt", "sv", "da", "fi", "ko", "cn", "jp", "bg", "cz", "ro" };
+    return result;
+}
+
+
+/******************************************************************************
+** Moviesubtitles
+******************************************************************************/
+
+const std::regex Moviesubtitles::regex_pattern[] = {
+    std::regex("href=\"/(movie-(\\d+)[.]html)\">(.*?) [(](\\d{4})[)]</a>", RegexFlags),
+    std::regex("<img src=\"images/flags/([a-z]{2})[.]gif\"[^]+?<a href=\"/subtitle-(\\d+)[.]html\"[^]+?\"Rip\"><nobr>([^<]+?)</[^]+?\"release\">([^<]*?)<[^]+?\"downloaded\">(\\d+)[^]+?\"parts\">(\\d+)<", RegexFlags),
+    std::regex("filename:[^]+?\"filename\">([^<]+?)<", RegexFlags),
+};
+
+SRESULT Moviesubtitles::Search(const SubtitlesInfo& pFileInfo) {
+    SRESULT searchResult = SR_UNDEFINED;
+    if (pFileInfo.seasonNumber == -1) {
+        std::string data;
+        searchResult = DownloadInternal(StringFormat("http://www.moviesubtitles.org/search.php?q=%s", UrlEncode(pFileInfo.title.c_str())), "", data);
+
+        regexResults results;
+        stringMatch(regex_pattern[0], data, results);
+        for (const auto& iter : results) {
+            CheckAbortAndReturn();
+            if (_strcmpi(pFileInfo.title.c_str(), iter[2].c_str()) != 0) { continue; }
+            std::string data1;
+            searchResult = DownloadInternal(StringFormat("http://www.moviesubtitles.org/movie-%s.html", iter[1].c_str()), "", data1);
+
+            regexResults results1;
+            stringMatch(regex_pattern[1], data1, results1);
+            for (auto& iter1 : results1) {
+                CheckAbortAndReturn();
+                for (const auto& language : tvsubtitles_languages) { if (iter1[0] == language.code) { iter1[0] = language.name; } }
+                if (CheckLanguage(iter1[0])) {
+                    SubtitlesInfo pSubtitlesInfo;
+                    std::string data2;
+                    std::string url(StringFormat("http://www.moviesubtitles.org/subtitle-%s.html", iter1[1].c_str()));
+                    searchResult = DownloadInternal(url, "", data2);
+                    regexResults results2;
+                    stringMatch(regex_pattern[2], data2, results2);
+                    for (const auto& iter2 : results2) {
+                        pSubtitlesInfo.fileName = iter2[0];
+                    }
+                    pSubtitlesInfo.title = iter[2];
+                    pSubtitlesInfo.year = iter[3].empty() ? -1 : atoi(iter[3].c_str());
+                    pSubtitlesInfo.seasonNumber = pFileInfo.seasonNumber;
+                    pSubtitlesInfo.episodeNumber = pFileInfo.episodeNumber;
+                    pSubtitlesInfo.id = iter1[1];
+                    pSubtitlesInfo.languageCode = iter1[0];
+                    pSubtitlesInfo.languageName = UTF16To8(ISOLang::ISO639XToLanguage(pSubtitlesInfo.languageCode.c_str()));
+                    pSubtitlesInfo.downloadCount = atoi(iter1[4].c_str());
+                    pSubtitlesInfo.discNumber = atoi(iter1[5].c_str());
+                    pSubtitlesInfo.discCount = atoi(iter1[5].c_str());
+                    pSubtitlesInfo.url = url;
+                    Set(pSubtitlesInfo);
+                }
+            }
+        }
+    }
+    return searchResult;
+}
+
+SRESULT Moviesubtitles::Download(SubtitlesInfo& pSubtitlesInfo) {
+    std::string url = StringFormat("http://www.moviesubtitles.org/download-%s.html", pSubtitlesInfo.id.c_str());
+    TRACE(_T("%S::Download => %S\n"), Name().c_str(), url.c_str());
+
+    return DownloadInternal(url, "", pSubtitlesInfo.fileContents);
+}
+
+const std::set<std::string>& Moviesubtitles::Languages() const {
+    static std::set<std::string> result = { "en", "es", "fr", "de", "br", "ru", "ua", "it", "gr", "ar", "hu", "pl", "tr", "nl", "pt", "sv", "da", "fi", "ko", "cn", "jp", "bg", "cz", "ro" };
+    return result;
+}
+
+
+/******************************************************************************
+** addic7ed
+******************************************************************************/
+
+const std::regex addic7ed::regex_pattern[] = {
+    std::regex("<a href=\"/show/(\\d+)\" >Show <i>(.*?)(?: [(](\\d{4})[)])?(?: [(]?(AU|CA|FR|JP|UK|US)[)]?)?</i></a>", RegexFlags),
+};
+
+std::string addic7ed::UserAgent() const {
+    static std::string AGENT_LIST[] = {
+        "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
+        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0",
+        "Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0",
+        "Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36",
+        "Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko",
+        "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A",
+        "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25",
+    };
+
+    return AGENT_LIST[rand() % _countof(AGENT_LIST)];
+}
+
+SRESULT addic7ed::Login(const std::string& sUserName, const std::string& sPassword) {
+    if (!sUserName.empty() && !sPassword.empty()) {
+        std::string url("http://www.addic7ed.com/dologin.php");
+        stringMap headers({
+            { "User-Agent", UserAgent() },
+            { "Referer", "http://www.addic7ed.com/login.php" },
+            { "Content-Type", "application/x-www-form-urlencoded" },
+        });
+
+        std::string content, data;
+        content += StringFormat("username=%s&password=%s&remember=true&url=&Submit=Log+in",
+                                 UrlEncode(sUserName.c_str()), UrlEncode(sPassword.c_str()));
+
+        DWORD dwStatusCode = NULL;
+        StringUpload(url, headers, content, data, FALSE, &dwStatusCode);
+        if (dwStatusCode == 302) {
+            // 'Success ': (HTTP/1.1 302 Found):
+            // If everything was OK, the HTTP status code 302 will be returned.
+            return SR_SUCCEEDED;
+        } else if (dwStatusCode == 200) {
+            CString msg;
+            CString temp("Failed to log in on ""%S"" with username ""%S"".\n\nPlease enter the correct username and password or reset the credentials to log in as anonymous user.");
+            msg.Format(temp, Name().c_str(), UserName().c_str());
+            AfxMessageBox(msg, MB_ICONERROR | MB_OK);
+            return SR_FAILED;
+        }
+    }
+    return SR_UNDEFINED;
+}
+
+SRESULT addic7ed::Search(const SubtitlesInfo& pFileInfo) {
+    SRESULT searchResult = SR_UNDEFINED;
+    if (pFileInfo.seasonNumber != -1) {
+
+        std::string search(pFileInfo.title);
+        if (!pFileInfo.country.empty()) { search += " " + pFileInfo.country; }
+        if (pFileInfo.year != -1) { search += " (" + std::to_string(pFileInfo.year) + ")"; }
+        // remove ' and ' from string and replace '!?&':' with ' ' to get more accurate results
+        search = std::regex_replace(search, std::regex(" and |[!?&':]", RegexFlags), " ");
+
+        std::string url = StringFormat("http://www.addic7ed.com/search.php?search=%s", UrlEncode(search.c_str()));
+        TRACE(_T("%S::Search => %S\n"), Name().c_str(), url.c_str());
+
+        std::string data;
+        searchResult = DownloadInternal(url, "", data);
+
+        regexResults results;
+        stringMatch(regex_pattern[0], data, results);
+        for (const auto& iter : results) {
+            CheckAbortAndReturn();
+            std::string data1;
+            searchResult = DownloadInternal(StringFormat("http://www.addic7ed.com/ajax_loadShow.php?show=%s&season=%d&langs=%s&hd=undefined&hi=undefined", iter[0].c_str(), pFileInfo.seasonNumber, GetLanguagesString().c_str()), "", data1);
+
+            regexResults results1;
+            stringMatch(std::regex(StringFormat("<tr class=\"epeven completed\"><td>%d</td><td>%d</td><td><a href=\"([^\"]+)\">(.*?)</a></td><td>(.*?)</td><td class=\"c\">(.*?)</td>[^<]*<td class=\"c\">Completed</td><td class=\"c\">(.*?)</td><td class=\"c\">(.*?)</td><td class=\"c\">(.*?)</td><td class=\"c\"><a href=\"(/updated/(\\d+)/\\d+/\\d+)\">Download</a></td>", pFileInfo.seasonNumber, pFileInfo.episodeNumber), RegexFlags), data1, results1);
+            for (const auto& iter1 : results1) {
+                CheckAbortAndReturn();
+                SubtitlesInfo pSubtitlesInfo;
+                pSubtitlesInfo.fileName = StringFormat("%s - %dx%0*d - %s.%s.%s.%s%supdated.Addicted.com.srt", pFileInfo.title.c_str(), pFileInfo.seasonNumber, 2, pFileInfo.episodeNumber, HtmlSpecialCharsDecode(iter1[1].c_str()), iter1[3].empty() ? "Undefined" : iter1[3].c_str(), iter1[2].c_str(), (iter1[4].empty() ? "" : "HI."), (iter1[5].empty() ? "" : "C."));
+                pSubtitlesInfo.fileExtension = "srt";
+                pSubtitlesInfo.id = "http://www.addic7ed.com" + iter1[7];
+                pSubtitlesInfo.url = "http://www.addic7ed.com" + iter1[0];
+                pSubtitlesInfo.languageCode = addic7ed_languages[atoi(iter1[8].c_str())].code;
+                pSubtitlesInfo.languageName = iter1[2];
+                pSubtitlesInfo.hearingImpaired = iter1[4].empty() ? FALSE : TRUE;
+                pSubtitlesInfo.corrected = (iter1[5].empty()) ? FALSE : TRUE;
+                pSubtitlesInfo.seasonNumber = pFileInfo.seasonNumber;
+                pSubtitlesInfo.episodeNumber = pFileInfo.episodeNumber;
+                pSubtitlesInfo.title = iter[1];
+                pSubtitlesInfo.title2 = HtmlSpecialCharsDecode(iter1[1].c_str());
+                pSubtitlesInfo.year = iter[2].empty() ? -1 : atoi(iter[2].c_str());
+                pSubtitlesInfo.country = iter[3];
+                pSubtitlesInfo.discNumber = 1;
+                pSubtitlesInfo.discCount = 1;
+                Set(pSubtitlesInfo);
+            }
+        }
+    }
+    return searchResult;
+}
+
+SRESULT addic7ed::Download(SubtitlesInfo& pSubtitlesInfo) {
+    TRACE(_T("%S::Download => %S\n"), Name().c_str(), pSubtitlesInfo.id.c_str());
+    return DownloadInternal(pSubtitlesInfo.id, pSubtitlesInfo.url, pSubtitlesInfo.fileContents);
+}
+
+const std::set<std::string>& addic7ed::Languages() const {
+    static bool bInitialized = false;
+    static std::set<std::string> result;
+    if (bInitialized) {
+        return result;
+    }
+    for (const auto& iter : addic7ed_languages) {
+        if (strlen(iter.code) && result.find(iter.code) == result.end()) {
+            result.emplace(iter.code);
+        }
+    }
+    bInitialized = true;
+    return result;
+}
+
+std::string addic7ed::GetLanguagesString() {
+    std::string result;
+    std::list<std::string> languages(LanguagesISO6391());
+    if (!languages.empty()) {
+        for (const auto& iter : languages) {
+            for (const auto& iter2 : addic7ed_languages) {
+                if (strlen(iter2.code) && iter == iter2.code) {
+                    result += "|" + std::to_string(&iter2 - &addic7ed_languages[0]);
+                }
+            }
+        }
+        if (!result.empty()) {
+            result += "|";
+        }
+    }
     return result;
 }
