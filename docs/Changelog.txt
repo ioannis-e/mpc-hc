@@ -80,3 +80,4 @@ next version - not released yet
 ! Ticket #5828, Update seekbar position when generating thumbnails
 ! Ticket #5829, Creating thumbnails while the video was stopped left the player in an undefined state. The stopped state
   is now properly restored after creating the thumbnails
+* Ticket #5865, Add context menu option to copy subtitle url
